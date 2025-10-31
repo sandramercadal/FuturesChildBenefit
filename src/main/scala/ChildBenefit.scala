@@ -74,8 +74,8 @@ object ChildBenefit extends App {
     }
   }
 
-    // Use it:
-
+    /**Use it */
+  //Family 1: has two young children
     val youngFamily = List(
       ChildInFamily(age = 3, inEducation = false, isDisabled = false),
       ChildInFamily(age = 1, inEducation = false, isDisabled = false)
@@ -83,18 +83,35 @@ object ChildBenefit extends App {
 
     val youngFamilyTotalIncome = 35000
 
-    println("Processing your child benefit calculation") //This needs to print before the Future is created
+    println("Processing your child benefit calculation...") //This needs to print before the Future is created
 
     val youngFamilybenefitCalculation = calculateBenefitWithAsync(youngFamily, youngFamilyTotalIncome)
 
 
     youngFamilybenefitCalculation.onComplete {
-      case Success(result) => println(result)
+      case Success(result) => println("Family 1: two young children" + (result))
       case Failure(exception) => println(s"Processing your calculation failed: ${exception.getMessage}")
     }
 
     // Keep the program alive to get result. This is a Future outside of the Future above.
     Thread.sleep(2000)
+
+
+  //Family 2: Single child family
+  val singleChildFamily = List(
+    ChildInFamily(age = 6, inEducation = true, isDisabled = false)
+  )
+  val singleChildIncome = 65000 // The child benefit reduced rate is applied
+
+  println("Family 2: Single child & higher earnings")
+  val singleChildFamilybenefitCalculation = calculateBenefitWithAsync(singleChildFamily, singleChildIncome)
+  singleChildFamilybenefitCalculation.onComplete {
+    case Success(result) => println(result + "\n")
+    case Failure(exception) => println(s"Failed: ${exception.getMessage}\n")
   }
+
+  Thread.sleep(500)
+
+}
 
 
