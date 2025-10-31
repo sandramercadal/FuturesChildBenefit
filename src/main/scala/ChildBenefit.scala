@@ -58,7 +58,7 @@ object ChildBenefit extends App {
     FurtherChildRate * 52
   }
 
-  /** Add Future with OnComplete */
+  /** Add Future with OnComplete & Success/Failure */
   //I just want to print something so will use Future[String. Later can use Future[BigDecimal] if want to do more calculations.
   def calculateBenefitWithAsync(children: List[ChildInFamily], income: Int): Future[String] = {
     Future {
