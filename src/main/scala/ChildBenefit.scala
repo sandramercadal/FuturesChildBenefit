@@ -1,10 +1,10 @@
 import scala.concurrent.{Future, Await}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.util.{Success, Failure}
+import scala.util.{Success, Failure, Try}
 
 
-object ChildBenefit extends App {
+object ChildBenefit { //have removed extends app and replaced with line 92
   val EldestChildRate = 26.05 //per week
   val FurtherChildRate = 17.25 //per week
   val reducedRateOneChild = 2.88 //per week
@@ -17,7 +17,6 @@ object ChildBenefit extends App {
     else false
   }
 
-  //  /** disabled child rate * */
   def additionalDisabledBenefitRate(children: List[ChildInFamily], income: Int): BigDecimal = {
     val countChildrenWithDisability = children.filter(_.isDisabled == true)
     if (countChildrenWithDisability.nonEmpty && income <= 100000)
@@ -58,11 +57,11 @@ object ChildBenefit extends App {
     FurtherChildRate * 52
   }
 
-  /** Add Future with OnComplete & Success/Failure */
+  /** Add Future with OnComplete & Success/Failure
+   * Future is for async operations (things that take time) */
   //I just want to print something so will use Future[String. Later can use Future[BigDecimal] if want to do more calculations.
   def calculateBenefitWithAsync(children: List[ChildInFamily], income: Int): Future[String] = {
     Future {
-      //Thread.sleep(1500) //This can be a fake delay just coding it here for learning purposes
 
       val weeklyAmount = finalTotalValue(children, income)
       val yearlyAmount = weeklyAmount * 52
@@ -74,8 +73,25 @@ object ChildBenefit extends App {
     }
   }
 
-    /**Use it */
-  //Family 1: has two young children
+  /** Add Try for synchronous error handling */
+  def calculateBenefitWithTry(children: List[ChildInFamily], income: Int): Try[String] = {
+    Try {
+      // This could throw an exception if something goes wrong
+      if (income < 0) throw new IllegalArgumentException("Income cannot be negative")
+      if (children.isEmpty) throw new IllegalArgumentException("Must have at least one child")
+
+      val weeklyAmount = finalTotalValue(children, income)
+      val yearlyAmount = weeklyAmount * 52
+      val eligibleCount = children.count(isChildEligible)
+      val disabledCount = children.count(_.isDisabled)
+
+      s"Eligible Children: $eligibleCount, Disabled Children: $disabledCount, Weekly Benefit: £$weeklyAmount, Annual Benefit: £$yearlyAmount"
+    }
+  }
+
+  def main(args: Array[String]): Unit = {
+    /** Using OnComplete & Success/Failure */
+    //Family 1: has two young children
     val youngFamily = List(
       ChildInFamily(age = 3, inEducation = false, isDisabled = false),
       ChildInFamily(age = 1, inEducation = false, isDisabled = false)
@@ -89,29 +105,86 @@ object ChildBenefit extends App {
 
 
     youngFamilybenefitCalculation.onComplete {
-      case Success(result) => println("Family 1: two young children" + (result))
+      case Success(result) => println("Family 1: two young children - " + result)
       case Failure(exception) => println(s"Processing your calculation failed: ${exception.getMessage}")
     }
 
-    // Keep the program alive to get result. This is a Future outside of the Future above.
-    Thread.sleep(2000)
+    // Wait for Family 1 to complete before moving on
+    Await.ready(youngFamilybenefitCalculation, 5.seconds)
 
 
-  //Family 2: Single child family
-  val singleChildFamily = List(
-    ChildInFamily(age = 6, inEducation = true, isDisabled = false)
-  )
-  val singleChildIncome = 65000 // The child benefit reduced rate is applied
+    //Family 2: Single child family
+    val singleChildFamily = List(
+      ChildInFamily(age = 6, inEducation = true, isDisabled = false)
+    )
+    val singleChildIncome = 65000 // The child benefit reduced rate is applied
 
-  println("Family 2: Single child & higher earnings")
-  val singleChildFamilybenefitCalculation = calculateBenefitWithAsync(singleChildFamily, singleChildIncome)
-  singleChildFamilybenefitCalculation.onComplete {
-    case Success(result) => println(result + "\n")
-    case Failure(exception) => println(s"Failed: ${exception.getMessage}\n")
-  }
+    println("Family 2: Single child & higher earnings")
+    val singleChildFamilybenefitCalculation = calculateBenefitWithAsync(singleChildFamily, singleChildIncome)
+    singleChildFamilybenefitCalculation.onComplete {
+      case Success(result) => println(result + "\n")
+      case Failure(exception) => println(s"Failed: ${exception.getMessage}\n")
+    }
 
-  Thread.sleep(500)
+    Await.ready(singleChildFamilybenefitCalculation, 5.seconds)
+    Thread.sleep(100)
 
-}
+    /** Try is good for synchronous error handling */
+    // Family 3: Using Try for synchronous validation
+    println("\nFamily 3: Using Try")
+    val tryFamily = List(
+      ChildInFamily(age = 12, inEducation = true, isDisabled = true),
+      ChildInFamily(age = 19, inEducation = false, isDisabled = false)
+    )
+    val tryFamilyIncome = 45000
+
+    val tryResult = calculateBenefitWithTry(tryFamily, tryFamilyIncome)
+    tryResult match {
+      case Success(result) => println(result + "\n")
+      case Failure(exception) => println(s"Validation failed: ${exception.getMessage}")
+    }
+
+    Thread.sleep(1000)
+
+
+    /** .fold - handling success/failure in a single expression */
+// Family 4: Using.map (transforms successful Future results)
+
+    println("\nFamily 4: Using .map")
+    val mapFamily = List(
+      ChildInFamily(age = 8, inEducation = true, isDisabled = false),
+      ChildInFamily(age = 5, inEducation = false, isDisabled = true),
+      ChildInFamily(age = 2, inEducation = false, isDisabled = false)
+    )
+    val mapFamilyIncome = 48000
+
+    val mapFamilyCalculation = calculateBenefitWithAsync(mapFamily, mapFamilyIncome)
+      .map(result => result)
+
+    mapFamilyCalculation.onComplete {
+      case Success(result) => println("Family 4: " + result)
+      case Failure(exception) => println(s"Failed: ${exception.getMessage}")
+    }
+
+    try {
+      Await.ready(mapFamilyCalculation, 5.seconds)
+    } catch {
+      case e: Exception => println(s"Family 4 had an issue but continuing...")
+    }
+
+
+    /** .recover - provides a fallback value if the Future fails */
+
+    //Family 5: Using .recover (provides fallback value on failure)
+
+    Thread.sleep(2000) //Let's all async prints finish
+  } // This closes main method
+} // This closes object ChildBenefit
+
+
+
+
+
+
 
 
