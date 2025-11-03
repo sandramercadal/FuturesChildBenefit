@@ -59,7 +59,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92
 
   /** Add Future with OnComplete & Success/Failure
    * Future is for async operations (things that take time) */
-  //I just want to print something so will use Future[String. Later can use Future[BigDecimal] if want to do more calculations.
+  //I just want to print something so will use Future[String]. Later can use Future[BigDecimal] if want to do more calculations.
   def calculateBenefitWithAsync(children: List[ChildInFamily], income: Int): Future[String] = {
     Future {
 
@@ -69,11 +69,11 @@ object ChildBenefit { //have removed extends app and replaced with line 92
       val disabledCount = children.count(_.isDisabled)
 
       //Print string result (it returns then onComplete prints it)
-      s"Eligible Children: $eligibleCount, Disabled Children: $disabledCount, Weekly Benefit: £$weeklyAmount, Annual Benefit: £$yearlyAmount"
+      s"Eligible children: $eligibleCount, Disabled children: $disabledCount, Weekly benefit: £$weeklyAmount, Annual benefit: £$yearlyAmount"
     }
   }
 
-  /** Add Try for synchronous error handling */
+  /** Add "Try" for synchronous error handling */
   def calculateBenefitWithTry(children: List[ChildInFamily], income: Int): Try[String] = {
     Try {
       // This could throw an exception if something goes wrong
@@ -85,13 +85,13 @@ object ChildBenefit { //have removed extends app and replaced with line 92
       val eligibleCount = children.count(isChildEligible)
       val disabledCount = children.count(_.isDisabled)
 
-      s"Eligible Children: $eligibleCount, Disabled Children: $disabledCount, Weekly Benefit: £$weeklyAmount, Annual Benefit: £$yearlyAmount"
+      s"Eligible children: $eligibleCount, Disabled children: $disabledCount, Weekly benefit: £$weeklyAmount, Annual benefit: £$yearlyAmount"
     }
   }
 
   def main(args: Array[String]): Unit = {
     /** Using OnComplete & Success/Failure */
-    //Family 1: has two young children
+    //Family 1: have two young children
     val youngFamily = List(
       ChildInFamily(age = 3, inEducation = false, isDisabled = false),
       ChildInFamily(age = 1, inEducation = false, isDisabled = false)
@@ -101,16 +101,16 @@ object ChildBenefit { //have removed extends app and replaced with line 92
 
     println("Processing your child benefit calculation...") //This needs to print before the Future is created
 
-    val youngFamilybenefitCalculation = calculateBenefitWithAsync(youngFamily, youngFamilyTotalIncome)
+    val youngFamilyBenefitCalculation = calculateBenefitWithAsync(youngFamily, youngFamilyTotalIncome)
 
 
-    youngFamilybenefitCalculation.onComplete {
+    youngFamilyBenefitCalculation.onComplete {
       case Success(result) => println("Family 1: two young children - " + result)
       case Failure(exception) => println(s"Processing your calculation failed: ${exception.getMessage}")
     }
 
     // Wait for Family 1 to complete before moving on
-    Await.ready(youngFamilybenefitCalculation, 5.seconds)
+    Await.ready(youngFamilyBenefitCalculation, 5.seconds)
 
 
     //Family 2: Single child family
@@ -148,9 +148,9 @@ object ChildBenefit { //have removed extends app and replaced with line 92
 
 
     /** .fold - handling success/failure in a single expression */
-// Family 4: Using.map (transforms successful Future results)
+    // Family 4: Using.map (transforms successful Future results)
 
-    println("\nFamily 4: Using .map")
+    println("Family 4: Using .map")
     val mapFamily = List(
       ChildInFamily(age = 8, inEducation = true, isDisabled = false),
       ChildInFamily(age = 5, inEducation = false, isDisabled = true),
@@ -173,13 +173,35 @@ object ChildBenefit { //have removed extends app and replaced with line 92
     }
 
 
-    /** .recover - provides a fallback value if the Future fails */
+    /** .recover - transforms a failed Future into a successful Future with a fallback value. So onComplete will almost always get a Success*/
+    //Family 5: Using .recover
+    println("Family 5: Using .recover")
+    val Family5UsingRecover = List(
+      ChildInFamily(age = 15, inEducation = true, isDisabled = false),
+      ChildInFamily(age = 17, inEducation = true, isDisabled = false)
+    )
+    val Family5TotalIncome = 78000
 
-    //Family 5: Using .recover (provides fallback value on failure)
+    val Family5Calculation = calculateBenefitWithAsync(Family5UsingRecover, Family5TotalIncome)
+      .recover {
+        case e: Exception => s"I have recovered from error: ${e.getMessage} - now using a default calculation"
+      }
+
+    Family5Calculation.onComplete {
+      case Success(result) => println("Family 5:" + result)
+      case Failure(exception) => println(s"Failed: ${exception.getMessage}")
+    }
+
+    try {
+      Await.ready(Family5Calculation, 5.seconds)
+    } catch {
+      case e: Exception => println(s"The calculation for Family 5 had an issue but system continues...")
+    }
+
 
     Thread.sleep(2000) //Let's all async prints finish
-  } // This closes main method
-} // This closes object ChildBenefit
+  }
+}
 
 
 
