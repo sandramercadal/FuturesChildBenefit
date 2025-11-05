@@ -199,6 +199,28 @@ object ChildBenefit { //have removed extends app and replaced with line 92
     }
 
 
+      /** Family 6: Using .fold (handles success and failure in one single expression)
+       It immediately returns a value (not a Future, so no need for Await or onComplete)
+       First parameter handles exceptions, second handles successful results
+       Very synchronous!
+      **/
+    println("Family 6: Using .fold")
+    val Family6UsingFold = List(
+      ChildInFamily(age = 10, inEducation = true, isDisabled = false),
+      ChildInFamily(age = 14, inEducation = true, isDisabled = true)
+    )
+    val Family6TotalIncome = 55000
+
+    val Family6Result = calculateBenefitWithTry(Family6UsingFold, Family6TotalIncome)
+
+    val Family6Calculation = Family6Result.fold(
+      exception => s"Error occurred: ${exception.getMessage}", // Failure case
+      result => result // Success case
+    )
+
+    println("Family 6: " + Family6Calculation)
+
+
     Thread.sleep(2000) //Let's all async prints finish
   }
 }
