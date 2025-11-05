@@ -148,7 +148,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92
 
 
     /** .fold - handling success/failure in a single expression */
-    // Family 4: Using.map (transforms successful Future results)
+    // Family 4: Using.map (transforms the value inside a Future)
 
     println("Family 4: Using .map")
     val mapFamily = List(
@@ -201,9 +201,8 @@ object ChildBenefit { //have removed extends app and replaced with line 92
 
       /** Family 6: Using .fold (handles success and failure in one single expression)
        It immediately returns a value (not a Future, so no need for Await or onComplete)
-       First parameter handles exceptions, second handles successful results
-       Very synchronous!
-      **/
+       First parameter handles exceptions, second handles successful results. It is very synchronous (immediate result)!
+       The .fold unwraps the Try container and gives actual value straight away**/
     println("Family 6: Using .fold")
     val Family6UsingFold = List(
       ChildInFamily(age = 10, inEducation = true, isDisabled = false),
@@ -211,19 +210,51 @@ object ChildBenefit { //have removed extends app and replaced with line 92
     )
     val Family6TotalIncome = 55000
 
-    val Family6Result = calculateBenefitWithTry(Family6UsingFold, Family6TotalIncome)
+    val Family6Result = calculateBenefitWithTry(Family6UsingFold, Family6TotalIncome) //calculateBenefitWithTry returns a Try[String, Try is a container that holds either Success(value) or Failure(exception) if something went wrong
 
     val Family6Calculation = Family6Result.fold(
       exception => s"Error occurred: ${exception.getMessage}", // Failure case
       result => result // Success case
-    )
+    ) //Family6Output is now a plain string (not a Try anymore)
 
     println("Family 6: " + Family6Calculation)
+//This example s good for simple error handling
+
+      /** Family 7: Using .flatMap (handles nested Futures/nested types). Not Async, needs Await
+       .flatMap is specifically for when you're chaining async operations and need to avoid Future[Future[...]] nesting.
+       Useful when need to chain multiple async operations. Each operation depends on the previous one's result
+       Keeps code flat instead of deeply nested
+       **/
+    println("Family 7: Using .flatMap for nested Futures")
+    val Family7 = List(
+      ChildInFamily(age = 4, inEducation = false, isDisabled = false),
+      ChildInFamily(age = 7, inEducation = true, isDisabled = false)
+    )
+    val Family7Income = 42000
+
+    // .flatMap flattens nested Futures: Future[Future[String]] becomes Future[String]
+    val Family7Calculation = calculateBenefitWithAsync(Family7, Family7Income)  //calculateBenefitWithAsync returns Future[String]
+      .flatMap { result => // Creates a nested Future, but flatMap flattens it automatically. There's another Future here...
+        Future.successful(s"Here is your calculation: $result") // Returns Future[String]
+      }
+
+    Family7Calculation.onComplete {
+      case Success(result) => println("Family 7: " + result)
+      case Failure(exception) => println(s"Failed: ${exception.getMessage}")
+    }
+
+    try {
+      Await.ready(Family7Calculation, 5.seconds)
+    } catch {
+      case e: Exception => println(s"Family 7 had an issue but system can continue...")
+    }
 
 
     Thread.sleep(2000) //Let's all async prints finish
   }
 }
+
+
 
 
 
