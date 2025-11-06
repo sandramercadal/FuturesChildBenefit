@@ -115,7 +115,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
       case Failure(exception) => println(s"Processing your calculation failed: ${exception.getMessage}")
     }
 
-    // Wait for Family 1 to complete before moving on /Await.ready blocks the main thread until the Future completes (or 5 seconds pass)
+    // Wait for Family 1 to complete before moving on / Await.ready blocks the main thread until the Future completes (or 5 seconds pass)
     Await.ready(youngFamilyBenefitCalculation, 5.seconds)
 
 
@@ -154,8 +154,11 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     Thread.sleep(1000)
 
 
-    /** .fold - handling success/failure in a single expression */
-    // Family 4: Using.map (transforms the value inside a Future)
+    /** .fold - handling success/failure in a single expression.
+     Future doesn't actually have a .fold method in standard Scala!! There is Try.fold though not Future.fold.
+     .map transforms the value inside a Future once it completes and returns a new Future with the transformed value **/
+
+    // Family 4: Using.map
 
     println("Family 4: Using .map")
     val mapFamily = List(
@@ -165,8 +168,8 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     )
     val mapFamilyIncome = 48000
 
-    val mapFamilyCalculation = calculateBenefitWithAsync(mapFamily, mapFamilyIncome)
-      .map(result => result)
+    val mapFamilyCalculation = calculateBenefitWithAsync(mapFamily, mapFamilyIncome) //calculateBenefitWithAsync returns Future[String]
+      .map(result => result) //Future[String] of simple identity transformation here but could be diff e.g. map(result => result.toUpperCase)
 
     mapFamilyCalculation.onComplete {
       case Success(result) => println("Family 4: " + result)
@@ -180,7 +183,8 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     }
 
 
-    /** .recover - transforms a failed Future into a successful Future with a fallback value. So onComplete will almost always get a Success*/
+    /** .recover - only handles failure! transforms failed Future into successful Future with a fallback value. So onComplete will almost always get a Success
+     (If calculation succeeds → original result is returned, if calculation throws exception → recovery message is returned instead**/
     //Family 5: Using .recover
     println("Family 5: Using .recover")
     val Family5UsingRecover = List(
@@ -206,18 +210,18 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     }
 
 
-      /** Family 6: Using .fold (handles success and failure in one single expression)
+      /** Family 6: Using .fold (handles both success and failure in one single expression) Instant decision (synchronous)!
        It immediately returns a value (not a Future, so no need for Await or onComplete)
        First parameter handles exceptions, second handles successful results. It is very synchronous (immediate result)!
        The .fold unwraps the Try container and gives actual value straight away**/
-    println("Family 6: Using .fold")
+    println("Family 6: Using .fold with Try")
     val Family6UsingFold = List(
       ChildInFamily(age = 10, inEducation = true, isDisabled = false),
       ChildInFamily(age = 14, inEducation = true, isDisabled = true)
     )
     val Family6TotalIncome = 55000
 
-    val Family6Result = calculateBenefitWithTry(Family6UsingFold, Family6TotalIncome) //calculateBenefitWithTry returns a Try[String, Try is a container that holds either Success(value) or Failure(exception) if something went wrong
+    val Family6Result = calculateBenefitWithTry(Family6UsingFold, Family6TotalIncome) //calculateBenefitWithTry returns a Try[String], Try is a container that holds either Success(value) or Failure(exception) if something went wrong
 
     val Family6Calculation = Family6Result.fold(
       exception => s"Error occurred: ${exception.getMessage}", // Failure case
@@ -227,11 +231,12 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     println("Family 6: " + Family6Calculation)
 //This example s good for simple error handling
 
+
       /** Family 7: Using .flatMap (handles nested Futures/nested types). Not Async, needs Await
-       .flatMap is specifically for when you're chaining async operations and need to avoid Future[Future[...]] nesting.
-       Useful when need to chain multiple async operations. Each operation depends on the previous one's result
-       Keeps code flat instead of deeply nested
-       **/
+       .flatMap is useful when need to chain multiple async operations & one Future depends on another and the need to avoid Future[Future[...]] nesting.
+        Each operation depends on the previous ones result. Keeps code flat instead of deeply nested, without flatMap would have messy Futures within Futures.
+      Using flatMap: transform value → returns Future[A] → result is Future[A] (flat Yay!)
+      Without e.g.: transform value → returns Future[A] → result is Future[Future[A]] (nested Boo!**/
     println("Family 7: Using .flatMap for nested Futures")
     val Family7 = List(
       ChildInFamily(age = 4, inEducation = false, isDisabled = false),
@@ -256,6 +261,12 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
       case e: Exception => println(s"Family 7 had an issue but system can continue...")
     }
 
+
+//Next steps: Add Future.sequence: Calculate benefits for 5 families in parallel
+    //Add .recoverWith: If calculation fails, retry with default values
+    //Remove all Awaits: Use only callbacks (harder but more realistic)
+    //Add timeout handling: What if a calculation takes too long?
+    //Create a custom ExecutionContext: Use a fixed thread pool of 2 threads
 
     Thread.sleep(2000) //Let's all async prints finish
   }
