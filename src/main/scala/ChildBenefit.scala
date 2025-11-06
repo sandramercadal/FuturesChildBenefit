@@ -57,10 +57,11 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     FurtherChildRate * 52
   }
 
-  /** Add Future with OnComplete & Success/Failure
-   * Future is for async operations (things that take time) */
+  /** Add "Future" (asynchronous) with OnComplete & Success/Failure
+   Future is for async operations (things that take time) allowing non-blocking execution but may require more careful error handling if an exception occurs
+   No pre-checking of conditions here: so if invalid data were passed, can lead to runtime exceptions during calculation**/
   //I just want to print something so will use Future[String]. Later can use Future[BigDecimal] if want to do more calculations.
-  def calculateBenefitWithAsync(children: List[ChildInFamily], income: Int): Future[String] = { //Will return a string but not immediately
+  def calculateBenefitWithAsync(children: List[ChildInFamily], income: Int): Future[String] = { //Will return a string in the Future but not immediately, might need to use methods to extract the result.
     Future { //wrapped in Future - calculations are processed asynchronously. Program doesn't get blocked/can continue executing other code.
 
       val weeklyAmount = finalTotalValue(children, income)
@@ -74,10 +75,12 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
   }
 
 
-  /** Add "Try" for synchronous error handling */
+  /** Add "Try" for synchronous error handling.
+   It runs the code within the Try block immediately & blocks program until the calculation is complete. Result (success or failure) is given immediately
+   Pre-checking here : In calculateBenefitWithTry, there are pre-checks for income and children's list, throwing specific exceptions if the conditions are not met. This checks the validity of inputs upfront and prevents unnecessary calculations**/
   def calculateBenefitWithTry(children: List[ChildInFamily], income: Int): Try[String] = {
     Try {
-      // This could throw an exception if something goes wrong
+      // Try[String] can be success or failure, instead of crashing the program you can work with any error is synchronous manner.
       if (income < 0) throw new IllegalArgumentException("Income cannot be negative")
       if (children.isEmpty) throw new IllegalArgumentException("Must have at least one child")
 
@@ -89,6 +92,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
       s"Eligible children: $eligibleCount, Disabled children: $disabledCount, Weekly benefit: £$weeklyAmount, Annual benefit: £$yearlyAmount"
     }
   }
+
 
   def main(args: Array[String]): Unit = {
     /** Using OnComplete & Success/Failure */
