@@ -57,12 +57,14 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     FurtherChildRate * 52
   }
 
+  /** A Future represents a value that will be available at some point in the future & allows my program to continue running while waiting for potentially slow operations to complete. */
+
   /** Add "Future" (asynchronous) with OnComplete & Success/Failure
    Future is for async operations (things that take time) allowing non-blocking execution but may require more careful error handling if an exception occurs
    No pre-checking of conditions here: so if invalid data were passed, can lead to runtime exceptions during calculation**/
   //I just want to print something so will use Future[String]. Later can use Future[BigDecimal] if want to do more calculations.
   def calculateBenefitWithAsync(children: List[ChildInFamily], income: Int): Future[String] = { //Will return a string in the Future but not immediately, might need to use methods to extract the result.
-    Future { //wrapped in Future - calculations are processed asynchronously. Program doesn't get blocked/can continue executing other code.
+    Future { //wrapped in Future-runs on separate thread-calculations processed asynchronously. Program doesn't get blocked/can continue executing other code.
 
       val weeklyAmount = finalTotalValue(children, income)
       val yearlyAmount = weeklyAmount * 52
@@ -106,15 +108,14 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
     println("Processing your child benefit calculation...") //This needs to print before the Future is created
 
-    val youngFamilyBenefitCalculation = calculateBenefitWithAsync(youngFamily, youngFamilyTotalIncome)
+    val youngFamilyBenefitCalculation = calculateBenefitWithAsync(youngFamily, youngFamilyTotalIncome) //calculateBenefitWithAsync starts the calculation & immediately returns a Future
 
-
-    youngFamilyBenefitCalculation.onComplete {
+    youngFamilyBenefitCalculation.onComplete { //onComplete registers a callback e.g. "when you finish, do this"
       case Success(result) => println("Family 1: two young children - " + result)
       case Failure(exception) => println(s"Processing your calculation failed: ${exception.getMessage}")
     }
 
-    // Wait for Family 1 to complete before moving on
+    // Wait for Family 1 to complete before moving on /Await.ready blocks the main thread until the Future completes (or 5 seconds pass)
     Await.ready(youngFamilyBenefitCalculation, 5.seconds)
 
 
@@ -134,9 +135,10 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     Await.ready(singleChildFamilybenefitCalculation, 5.seconds)
     Thread.sleep(100)
 
+
     /** Try is good for synchronous error handling */
     // Family 3: Using Try for synchronous validation
-    println("\nFamily 3: Using Try")
+    println("Family 3: Using Try")
     val tryFamily = List(
       ChildInFamily(age = 12, inEducation = true, isDisabled = true),
       ChildInFamily(age = 19, inEducation = false, isDisabled = false)
