@@ -34,7 +34,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
         BigDecimal(EldestChildRate) + (eligible.length - 1) * BigDecimal(FurtherChildRate)
       case _ if income >= 50001 && income <= 100000 && eligible.length == 1 => //Case 3
         BigDecimal(reducedRateOneChild)
-      case _ if income >= 50001 && income <= 100000 && eligible.length >= 2 => //case 4
+      case _ if income >= 50001 && income <= 100000 && eligible.length >= 2 => //Case 4
         BigDecimal(reducedRateTwoOrMore) * eligible.length
       case _ => BigDecimal(0) // Default case
     }
@@ -60,8 +60,8 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
   /** Add Future with OnComplete & Success/Failure
    * Future is for async operations (things that take time) */
   //I just want to print something so will use Future[String]. Later can use Future[BigDecimal] if want to do more calculations.
-  def calculateBenefitWithAsync(children: List[ChildInFamily], income: Int): Future[String] = {
-    Future {
+  def calculateBenefitWithAsync(children: List[ChildInFamily], income: Int): Future[String] = { //Will return a string but not immediately
+    Future { //wrapped in Future - calculations are processed asynchronously. Program doesn't get blocked/can continue executing other code.
 
       val weeklyAmount = finalTotalValue(children, income)
       val yearlyAmount = weeklyAmount * 52
@@ -72,6 +72,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
       s"Eligible children: $eligibleCount, Disabled children: $disabledCount, Weekly benefit: £$weeklyAmount, Annual benefit: £$yearlyAmount"
     }
   }
+
 
   /** Add "Try" for synchronous error handling */
   def calculateBenefitWithTry(children: List[ChildInFamily], income: Int): Try[String] = {
