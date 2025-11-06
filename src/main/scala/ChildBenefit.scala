@@ -4,7 +4,7 @@ import scala.concurrent.duration._
 import scala.util.{Success, Failure, Try}
 
 
-object ChildBenefit { //have removed extends app and replaced with line 92
+object ChildBenefit { //have removed extends app and replaced with line 92 def main(args: Array[String]): Unit = {
   val EldestChildRate = 26.05 //per week
   val FurtherChildRate = 17.25 //per week
   val reducedRateOneChild = 2.88 //per week
@@ -26,15 +26,15 @@ object ChildBenefit { //have removed extends app and replaced with line 92
   }
 
   def calculateWeeklyAmount(children: List[ChildInFamily], income: Int): BigDecimal = {
-    val eligible = children.filter(isChildEligible)
+    val eligible = children.filter(isChildEligible) //children.filter(isChildEligible) is used to create a list called eligible, which consists of children that meet certain eligibility criteria defined by the isChildEligible function.
 
     eligible match {
       case Nil => BigDecimal(0) // Case when there are no eligible children
-      case _ if income <= 50000 =>
+      case _ if income <= 50000 => //Case 2 (uses -1 so if 3 children eldest child receives EldestChildRate, other 2 children receive FurtherChildRate so no double-counting the eldest child).
         BigDecimal(EldestChildRate) + (eligible.length - 1) * BigDecimal(FurtherChildRate)
-      case _ if income >= 50001 && income <= 100000 && eligible.length == 1 =>
+      case _ if income >= 50001 && income <= 100000 && eligible.length == 1 => //Case 3
         BigDecimal(reducedRateOneChild)
-      case _ if income >= 50001 && income <= 100000 && eligible.length >= 2 =>
+      case _ if income >= 50001 && income <= 100000 && eligible.length >= 2 => //case 4
         BigDecimal(reducedRateTwoOrMore) * eligible.length
       case _ => BigDecimal(0) // Default case
     }
