@@ -59,7 +59,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
   /** A Future represents a value that will be available at some point in the future & allows my program to continue running while waiting for potentially slow operations to complete. */
 
-  /** Add "Future" (asynchronous) with OnComplete & Success/Failure
+  /** Add "Future" with OnComplete & Success/Failure(asynchronous)
    Future is for async operations (things that take time) allowing non-blocking execution but may require more careful error handling if an exception occurs
    No pre-checking of conditions here: so if invalid data were passed, can lead to runtime exceptions during calculation**/
   //I just want to print something so will use Future[String]. Later can use Future[BigDecimal] if want to do more calculations.
@@ -97,7 +97,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
 
   def main(args: Array[String]): Unit = {
-    /** Using OnComplete & Success/Failure */
+    /** Family 1 & 2: Using OnComplete & Success/Failure */
     //Family 1: have two young children
     val youngFamily = List(
       ChildInFamily(age = 3, inEducation = false, isDisabled = false),
@@ -136,8 +136,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     Thread.sleep(100)
 
 
-    /** Try is good for synchronous error handling */
-    // Family 3: Using Try for synchronous validation
+    /** Family 3: Using Try for synchronous validation, Try is good for synchronous error handling */
     println("Family 3: Using Try")
     val tryFamily = List(
       ChildInFamily(age = 12, inEducation = true, isDisabled = true),
@@ -154,11 +153,11 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     Thread.sleep(1000)
 
 
-    /** .fold - handling success/failure in a single expression.
+    /** Family 4: .fold - handling success/failure in a single expression.
      Future doesn't actually have a .fold method in standard Scala!! There is Try.fold though not Future.fold.
      .map transforms the value inside a Future once it completes and returns a new Future with the transformed value **/
 
-    // Family 4: Using.map
+    //Using.map
 
     println("Family 4: Using .map")
     val mapFamily = List(
@@ -183,9 +182,8 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     }
 
 
-    /** .recover - only handles failure! transforms failed Future into successful Future with a fallback value. So onComplete will almost always get a Success
+    /** Family 5: Using .recover - only handles failure! transforms failed Future into successful Future with a fallback value. So onComplete will almost always get a Success
      (If calculation succeeds → original result is returned, if calculation throws exception → recovery message is returned instead**/
-    //Family 5: Using .recover
     println("Family 5: Using .recover")
     val Family5UsingRecover = List(
       ChildInFamily(age = 15, inEducation = true, isDisabled = false),
@@ -295,7 +293,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     }
 
 
-    /** Family 9 - for-comprehension with Futures (Syntactic sugar for .flatMap and .map but chained Futures are more readable)
+    /** Family 9 - for-comprehension with Futures (Syntactic sugar for .flatMap and .map so chained Futures are more readable)
      sequential async operations**/
     println("Family 10: Using for-comprehension")
 
@@ -345,10 +343,10 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
 
 //Next steps possibly:
-//Add .recoverWith: If calculation fails, retry with default values
+//Add .recoverWith: If calculation fails, retry with default values?
 //Remove all Awaits: Use only callbacks (hard?)
 //Add timeout handling: What if a calculation takes too long?
-//Create a custom ExecutionContext: Use a fixed thread pool of 2 threads
+//Create a custom ExecutionContext: Use a fixed thread pool of 2 threads???
 
 
 
