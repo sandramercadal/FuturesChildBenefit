@@ -302,24 +302,24 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     val family9a = List(
       ChildInFamily(age = 6, inEducation = true, isDisabled = false)
     )
-    val income9a = 39250
+    val familyIncome9a = 39250
 
     val family9b = List(
       ChildInFamily(age = 13, inEducation = true, isDisabled = true),
       ChildInFamily(age = 15, inEducation = true, isDisabled = false)
     )
-    val income9b = 58000
+    val familyIncome9b = 58000
 
     val family9c = List(
       ChildInFamily(age = 7, inEducation = true, isDisabled = false),
       ChildInFamily(age = 10, inEducation = true, isDisabled = false)
     )
-    val income9c = 44500
+    val familyIncome9c = 44500
 
     val Family9Calculation: Future[String] = for {
-      family9aTotal <- calculateBenefitWithAsync(family9a, income9a) //uses def calculateBenefitWithAsync(children: List[ChildInFamily], income: Int): Future[String]
-      family9bTotal <- calculateBenefitWithAsync(family9b, income9b)
-      family9cTotal <- calculateBenefitWithAsync(family9c, income9c)
+      family9aTotal <- calculateBenefitWithAsync(family9a, familyIncome9a) //uses def calculateBenefitWithAsync(children: List[ChildInFamily], income: Int): Future[String]
+      family9bTotal <- calculateBenefitWithAsync(family9b, familyIncome9b)
+      family9cTotal <- calculateBenefitWithAsync(family9c, familyIncome9c)
     } yield s"Family 9a: $family9aTotal, Family 9b: $family9bTotal, Family 9c: $family9cTotal"
 
     Family9Calculation.onComplete {
