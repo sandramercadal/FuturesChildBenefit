@@ -262,11 +262,77 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     }
 
 
-//Next steps: Add Future.sequence: Calculate benefits for 5 families in parallel
-    //Add .recoverWith: If calculation fails, retry with default values
-    //Remove all Awaits: Use only callbacks (harder but more realistic)
-    //Add timeout handling: What if a calculation takes too long?
-    //Create a custom ExecutionContext: Use a fixed thread pool of 2 threads
+    /** Family 8 - Processes 4 families simultaneously using Future.sequence so all calculations run in parallel (instead of one after another - efficient!)**/
+    println("Family 8: Using Future.sequence for parallel processing")
+
+    val families8ForParallelProcessing = List(
+      (List(ChildInFamily(age = 4, inEducation = false, isDisabled = false)), 38000, "Calculation for Family 8 -The Smiths"),
+      (List(ChildInFamily(age = 10, inEducation = true, isDisabled = true), ChildInFamily(age = 7, inEducation = true, isDisabled = false)), 51000, "Calculation for Family 8 -The Browns"),
+      (List(ChildInFamily(age = 16, inEducation = true, isDisabled = false)), 67500, "Calculation for Family 8 -The Martins"),
+      (List(ChildInFamily(age = 3, inEducation = false, isDisabled = false), ChildInFamily(age = 5, inEducation = true, isDisabled = false), ChildInFamily(age = 8, inEducation = true, isDisabled = false)), 45000, "Calculation for Family 8 -The Jones")
+    )
+
+    // List of Futures which will all start running in parallel immediately
+    val family8ParallelCalculations: List[Future[String]] = families8ForParallelProcessing.map {
+      case (children, income, familyNameFromFamily8) =>
+        calculateBenefitWithAsync(children, income).map(result => s"$familyNameFromFamily8: $result")
+    }
+
+    // Future.sequence converts List[Future[String]] into Future[List[String]] e.g Future(["result1", "result2", "result3", "result4"])
+    val allFamilyResults: Future[List[String]] = Future.sequence(family8ParallelCalculations)
+
+    allFamilyResults.onComplete {
+      case Success(results) =>
+        println("All parallel calculations are now complete for all of Family 8:")
+        results.foreach(println)
+      case Failure(exception) => println(s"Family 8 failure - parallel calculations failed: ${exception.getMessage}")
+    }
+
+    try {
+      Await.ready(allFamilyResults, 10.seconds)
+    } catch {
+      case e: Exception => println(s"Family 8 parallel processing had an issue but system continues...")
+    }
+
+
+    /** Family 9 - for-comprehension with Futures (Syntactic sugar for .flatMap and .map but chained Futures are more readable)
+     sequential async operations**/
+    println("Family 10: Using for-comprehension")
+
+    val family9a = List(
+      ChildInFamily(age = 6, inEducation = true, isDisabled = false)
+    )
+    val income9a = 39250
+
+    val family9b = List(
+      ChildInFamily(age = 13, inEducation = true, isDisabled = true),
+      ChildInFamily(age = 15, inEducation = true, isDisabled = false)
+    )
+    val income9b = 58000
+
+    val family9c = List(
+      ChildInFamily(age = 7, inEducation = true, isDisabled = false),
+      ChildInFamily(age = 10, inEducation = true, isDisabled = false)
+    )
+    val income9c = 44500
+
+    val Family9Calculation: Future[String] = for {
+      family9aTotal <- calculateBenefitWithAsync(family9a, income9a) //uses def calculateBenefitWithAsync(children: List[ChildInFamily], income: Int): Future[String]
+      family9bTotal <- calculateBenefitWithAsync(family9b, income9b)
+      family9cTotal <- calculateBenefitWithAsync(family9c, income9c)
+    } yield s"Family 9a: $family9aTotal, Family 9b: $family9bTotal, Family 9c: $family9cTotal"
+
+    Family9Calculation.onComplete {
+      case Success(result) => println(result)
+      case Failure(exception) => println(s"Failed: ${exception.getMessage}")
+    }
+
+    try {
+      Await.ready(Family9Calculation, 3.seconds)
+    } catch {
+      case e: Exception => println(s"Family 9 had an issue but system continues...")
+    }
+
 
     Thread.sleep(2000) //Let's all async prints finish
   }
@@ -274,6 +340,15 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
 
 
+
+
+
+
+//Next steps possibly:
+//Add .recoverWith: If calculation fails, retry with default values
+//Remove all Awaits: Use only callbacks (hard?)
+//Add timeout handling: What if a calculation takes too long?
+//Create a custom ExecutionContext: Use a fixed thread pool of 2 threads
 
 
 
