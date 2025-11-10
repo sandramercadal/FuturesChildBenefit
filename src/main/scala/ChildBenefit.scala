@@ -1,4 +1,4 @@
-import scala.concurrent.{Future, Await}
+import scala.concurrent.{Future, Await, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.{Success, Failure, Try}
@@ -332,6 +332,47 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     }
 
 
+      /** Family 10 - Using Promise. Use when need to complete a Future based on external events, callbacks, or conditions that are unpredictable or outside your control.
+      so e.g. "I have the answer now but need to wait for XYZ (you manually control when & how a Future completes)
+       Promise is a writable, single-assignment container that completes a Future.
+       Future completes when Promise is fulfilled**/
+    println("Family 10: Using Promise. Manager approval of benefit with a Promise")
+
+    val family10WithPromise = List(
+      ChildInFamily(age = 4, inEducation = false, isDisabled = false),
+      ChildInFamily(age = 9, inEducation = true, isDisabled = true)
+    )
+    val familyIncome10 = 87000
+
+    val family10Promise = Promise[String]() //Create an empty promise that is waiting to be filled. Import promise so need to type scala.concurrent.Promise[String]()
+    val getFamily10PromiseFromFuture: Future[String] = family10Promise.future //Get the promise
+
+    Future { //runs on a separate thread. Manager approval process is happening in background
+      Thread.sleep(500)
+      val weeklyAmount = finalTotalValue(family10WithPromise, familyIncome10) //First do the actual calculations
+      val yearlyAmount = weeklyAmount * 52
+      val eligibleCount = family10WithPromise.count(isChildEligible)
+      val disabledCount = family10WithPromise.count(_.isDisabled)
+
+      family10Promise.success(  //fill the promise with the result
+        s"Eligible children: $eligibleCount, Disabled children: $disabledCount, Weekly benefit: £$weeklyAmount, Annual benefit: £$yearlyAmount"
+      )
+    }
+
+
+
+    getFamily10PromiseFromFuture.onComplete { //call back, when Futures completes do below
+      case Success(result) => println("Family 10: " + result)
+      case Failure(exception) => println(s"Failed: ${exception.getMessage}")
+    }
+
+    try { //wait here until Future finishes (max 5 seconds) which  blocks main program so it doesn't exit before family 10 finishes
+      Await.ready(getFamily10PromiseFromFuture, 5.seconds)
+    } catch {
+      case e: Exception => println(s"Family 10 had an issue but system continues...")
+    }
+
+
     Thread.sleep(2000) //Let's all async prints finish
   }
 }
@@ -346,7 +387,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 //Add .recoverWith: If calculation fails, retry with default values?
 //Remove all Awaits: Use only callbacks (hard?)
 //Add timeout handling: What if a calculation takes too long?
-//Create a custom ExecutionContext: Use a fixed thread pool of 2 threads???
+//Create a custom ExecutionContext: Use fixed thread pool of 2/3 threads???
 
 
 
