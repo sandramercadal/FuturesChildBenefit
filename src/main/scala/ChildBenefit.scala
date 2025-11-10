@@ -150,8 +150,9 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     )
     val family2aIncome = 44400
 
-    // Start async calc, starts running on a separate thread immediately, does calculation work in background
+    // Start async calc, starts running on a separate thread immediately, does calculation work in background of weekly & yearly amount etc
     val family2aCalculation = calculateBenefitWithAsync(family2aAwaitResult, family2aIncome) //calculateBenefitWithAsync returns a Future[String]
+   //The Future { } wrapper inside the function is what actually starts the helper. family2aCalculation now holds the "result"
 
     println("Calculation begun, now blocking until I get the result...")
 
