@@ -119,7 +119,8 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     Await.ready(youngFamilyBenefitCalculation, 5.seconds)
 
 
-    //Family 2: Single child family
+    //Family 2: Single child family with Await.ready
+    /** Await.ready just waits for completion, it doesn't extract the value & returns the Future itself */
     val singleChildFamily = List(
       ChildInFamily(age = 6, inEducation = true, isDisabled = false)
     )
@@ -134,6 +135,39 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
     Await.ready(singleChildFamilybenefitCalculation, 5.seconds)
     Thread.sleep(100)
+
+
+    /** Await.ready vs Await.result
+     Await.result blocks. Do you definitely need the result immediately? (blocking/synchronous).
+     It waits for completion, it extracts the actual value and returns the value directly (not the Future)**/
+    //Family 2a: An example with Await.ready with 2 threads running
+    println("Family 2a: Using Await.result to get answer immediately")
+
+    val family2aAwaitResult = List(
+      ChildInFamily(age = 6, inEducation = true, isDisabled = false),
+      ChildInFamily(age = 2, inEducation = false, isDisabled = true),
+      ChildInFamily(age = 11, inEducation = true, isDisabled = false)
+    )
+    val family2aIncome = 44400
+
+    // Start async calc, starts running on a separate thread immediately, does calculation work in background
+    val family2aCalculation = calculateBenefitWithAsync(family2aAwaitResult, family2aIncome) //calculateBenefitWithAsync returns a Future[String]
+
+    println("Calculation begun, now blocking until I get the result...")
+
+    try {
+      // Await.result blocks here and returns the actual string value
+      val benefitResult: String = Await.result(family2aCalculation, 6.seconds)
+
+      // Now we have the actual value, this is not a Future
+      println(s"Family 2a with Await.ready: Got immediate result - $benefitResult")
+
+    } catch {
+      case _: scala.concurrent.TimeoutException =>
+        println("Family 2a Await.ready: Calculation took too long oops!")
+      case e: Exception =>
+        println(s"Family 2a Await.ready: Calculation failed - ${e.getMessage}")
+    }
 
 
     /** Family 3: Using Try for synchronous validation, Try is good for synchronous error handling */
@@ -359,8 +393,6 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
       )
     }
 
-
-
     getFamily10PromiseFromFuture.onComplete { //call back, when Futures completes do below
       case Success(result) => println("Family 10: " + result)
       case Failure(exception) => println(s"Failed: ${exception.getMessage}")
@@ -371,6 +403,8 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     } catch {
       case e: Exception => println(s"Family 10 had an issue but system continues...")
     }
+
+
 
 
     Thread.sleep(2000) //Let's all async prints finish
