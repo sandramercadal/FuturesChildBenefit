@@ -418,11 +418,24 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
 
 
+
+
+
+
+
+
 //Next steps possibly:
 //Add .recoverWith: If calculation fails, retry with default values?
 //Remove all Awaits: Use only callbacks (hard?)
 //Add timeout handling: What if a calculation takes too long?
 //Create a custom ExecutionContext: Use fixed thread pool of 2/3 threads???
+//Futures that don't require an execution context?
+//validate a future with a filter and collect?
+//zip two succ futures to a future tuple?
+//foldLeft
+//flatter, zipWith, transform with
+//how to test a future
+//multiple chaining and combining - already included??
 
 
 
