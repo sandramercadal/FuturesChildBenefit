@@ -549,7 +549,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 Best not to:
  -------------
  block async code (use .map/.flatMap),
-mix sync and sync,
+mix sync and Async,
 have nested Futures (use .flatMap)
 Not handle the Future (use .recover or error handling).
 
