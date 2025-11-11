@@ -57,7 +57,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     FurtherChildRate * 52
   }
 
-  /** A Future represents a value that will be available at some point in the future & allows my program to continue running while waiting for potentially slow operations to complete. */
+  /** A Future represents a value that will be available at some point in the future & allows my program to continue running while waiting for potentially slow operations to complete. One advantage of Scala's futures is that they help you avoid blocking, you can keep the finite number of threads you decide to work with busy*/
 
   /** Add "Future" with OnComplete & Success/Failure(asynchronous)
    Future is for async operations (things that take time) allowing non-blocking execution but may require more careful error handling if an exception occurs
@@ -100,7 +100,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     /** Family 1 & 2: Using OnComplete & Success/Failure */
     //Family 1: have two young children
     val youngFamily = List(
-      ChildInFamily(age = 3, inEducation = false, isDisabled = false),
+      ChildInFamily(age = 3, inEducation = false, isDisabled = false), //from the case class called ChildInFamily
       ChildInFamily(age = 1, inEducation = false, isDisabled = false)
     )
 
@@ -112,7 +112,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
     youngFamilyBenefitCalculation.onComplete { //onComplete registers a callback e.g. "when you finish, do this"
       case Success(result) => println("Family 1: two young children - " + result)
-      case Failure(exception) => println(s"Processing your calculation failed: ${exception.getMessage}")
+      case Failure(exception) => println(s"Processing your calculation for Family 1 failed: ${exception.getMessage}")
     }
 
     // Wait for Family 1 to complete before moving on / Await.ready blocks the main thread until the Future completes (or 5 seconds pass)
@@ -130,7 +130,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     val singleChildFamilybenefitCalculation = calculateBenefitWithAsync(singleChildFamily, singleChildIncome)
     singleChildFamilybenefitCalculation.onComplete {
       case Success(result) => println(result + "\n")
-      case Failure(exception) => println(s"Failed: ${exception.getMessage}\n")
+      case Failure(exception) => println(s"Family 2 failure: ${exception.getMessage}\n")
     }
 
     Await.ready(singleChildFamilybenefitCalculation, 5.seconds)
@@ -154,7 +154,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     val family2aCalculation = calculateBenefitWithAsync(family2aAwaitResult, family2aIncome) //calculateBenefitWithAsync returns a Future[String]
    //The Future { } wrapper inside the function is what actually starts the helper. family2aCalculation now holds the "result"
 
-    println("Calculation begun, now blocking until I get the result...")
+    println("Family 2a calculation begun, now blocking until I get the result...")
 
     try {
       // Await.result blocks here and returns the actual string value
@@ -182,7 +182,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     val tryResult = calculateBenefitWithTry(tryFamily, tryFamilyIncome)
     tryResult match {
       case Success(result) => println(result + "\n")
-      case Failure(exception) => println(s"Validation failed: ${exception.getMessage}")
+      case Failure(exception) => println(s"Family 3 validation failed: ${exception.getMessage}")
     }
 
     Thread.sleep(1000)
@@ -207,7 +207,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
     mapFamilyCalculation.onComplete {
       case Success(result) => println("Family 4: " + result)
-      case Failure(exception) => println(s"Failed: ${exception.getMessage}")
+      case Failure(exception) => println(s"Family 4 failed: ${exception.getMessage}")
     }
 
     try {
@@ -228,12 +228,12 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
     val Family5Calculation = calculateBenefitWithAsync(Family5UsingRecover, Family5TotalIncome)
       .recover {
-        case e: Exception => s"I have recovered from error: ${e.getMessage} - now using a default calculation"
+        case e: Exception => s"Family 5 - I have recovered from error: ${e.getMessage} - now using a default calculation"
       }
 
     Family5Calculation.onComplete {
       case Success(result) => println("Family 5:" + result)
-      case Failure(exception) => println(s"Failed: ${exception.getMessage}")
+      case Failure(exception) => println(s"Family 5 failed: ${exception.getMessage}")
     }
 
     try {
@@ -257,7 +257,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     val Family6Result = calculateBenefitWithTry(Family6UsingFold, Family6TotalIncome) //calculateBenefitWithTry returns a Try[String], Try is a container that holds either Success(value) or Failure(exception) if something went wrong
 
     val Family6Calculation = Family6Result.fold(
-      exception => s"Error occurred: ${exception.getMessage}", // Failure case
+      exception => s"Error occurred for Family 6: ${exception.getMessage}", // Failure case
       result => result // Success case
     ) //Family6Output is now a plain string (not a Try anymore)
 
@@ -280,12 +280,12 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     // .flatMap flattens nested Futures: Future[Future[String]] becomes Future[String]
     val Family7Calculation = calculateBenefitWithAsync(Family7, Family7Income)  //calculateBenefitWithAsync returns Future[String]
       .flatMap { result => // Creates a nested Future, but flatMap flattens it automatically. There's another Future here...
-        Future.successful(s"Here is your calculation: $result") // Returns Future[String]
+        Future.successful(s"Here is your calculation for Family 7: $result") // Returns Future[String]
       }
 
     Family7Calculation.onComplete {
       case Success(result) => println("Family 7: " + result)
-      case Failure(exception) => println(s"Failed: ${exception.getMessage}")
+      case Failure(exception) => println(s"Family 7 failed: ${exception.getMessage}")
     }
 
     try {
@@ -357,7 +357,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
     Family9Calculation.onComplete {
       case Success(result) => println(result)
-      case Failure(exception) => println(s"Failed: ${exception.getMessage}")
+      case Failure(exception) => println(s"Family 9 failed: ${exception.getMessage}")
     }
 
     try {
@@ -390,13 +390,13 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
       val disabledCount = family10WithPromise.count(_.isDisabled)
 
       family10Promise.success(  //fill the promise with the result
-        s"Eligible children: $eligibleCount, Disabled children: $disabledCount, Weekly benefit: £$weeklyAmount, Annual benefit: £$yearlyAmount"
+        s"Family 10 eligible children: $eligibleCount, Family 10 disabled children: $disabledCount, Family 10 weekly benefit: £$weeklyAmount, Family 10 annual benefit: £$yearlyAmount"
       )
     }
 
     getFamily10PromiseFromFuture.onComplete { //call back, when Futures completes do below
       case Success(result) => println("Family 10: " + result)
-      case Failure(exception) => println(s"Failed: ${exception.getMessage}")
+      case Failure(exception) => println(s"Family 10 failed: ${exception.getMessage}")
     }
 
     try { //wait here until Future finishes (max 5 seconds) which  blocks main program so it doesn't exit before family 10 finishes
@@ -406,6 +406,127 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     }
 
 
+    /** Family 11 - Uses .zip to combine two Futures into a single tuple. Runs in parallel, zip waits for both Futures to complete, then combines their results into a tuple useful when you need results from two independent async operations, you need to compare or combine the two results and both can run at the same time **/
+    println("Family 11: Using .zip to combine two calculations")
+
+    val family11a = List(
+      ChildInFamily(age = 7, inEducation = true, isDisabled = false),
+      ChildInFamily(age = 10, inEducation = true, isDisabled = true)
+    )
+    val familyIncome11a = 39500
+
+    val family11b = List(
+      ChildInFamily(age = 4, inEducation = false, isDisabled = false),
+      ChildInFamily(age = 6, inEducation = true, isDisabled = false),
+      ChildInFamily(age = 11, inEducation = true, isDisabled = false)
+    )
+    val familyIncome11b = 54000
+
+    // Start both calculations at the same time (in parallel)
+    val calculation11a = calculateBenefitWithAsync(family11a, familyIncome11a)
+    val calculation11b = calculateBenefitWithAsync(family11b, familyIncome11b)
+
+    println("Family 11: Both calculations started in parallel...")
+
+    // zip combines both results into a tuple: (resultA, resultB)
+    val combinedCalculation = calculation11a.zip(calculation11b)
+
+    combinedCalculation.onComplete {
+      case Success((resultA, resultB)) =>
+        println("Family 11: Both calculations ran in parallel and are complete!")
+        println(s"  Family 11A: $resultA")
+        println(s"  Family 11B: $resultB")
+
+        // Can now compare or combine the two results
+        println(s"  Processing complete for both families in Family 11")
+
+      case Failure(exception) =>
+        println(s"Family 11: At least one calculation failed - ${exception.getMessage}")
+    }
+
+    try {
+      Await.ready(combinedCalculation, 6.seconds)
+    } catch {
+      case e: Exception => println(s"Family 11 had an issue but system continues...")
+    }
+
+
+    /** Family 12 - Customised thread pools - Create a custom ExecutionContext: Use fixed thread pool of 3 threads when 5 families arrive at once.
+     E.g only 3 checkout till lanes at a supermarket open, if 5 customers arrive at once, 2 will have to wait. My computer decides how many helpers to create (usually 1 helper per CPU core), If 8 CPU cores = 8 helpers available
+      Lots of helpers = lots of work happens at once*/
+
+    println("Family 12: 5 families, but only 3 threads - so some families must wait like in a supermarket when there are not enough checkouts open")
+
+    val family12A = (List(
+      ChildInFamily(age = 4, inEducation = false, isDisabled = false),
+      ChildInFamily(age = 10, inEducation = true, isDisabled = false)
+    ), 38000)
+
+    val family12B = (List(
+      ChildInFamily(age = 10, inEducation = true, isDisabled = true)
+    ), 42500)
+
+    val family12C = (List(
+      ChildInFamily(age = 12, inEducation = true, isDisabled = false),
+      ChildInFamily(age = 16, inEducation = true, isDisabled = false),
+      ChildInFamily(age = 5, inEducation = true, isDisabled = false)
+    ), 56000)
+
+    val family12D = (List(
+      ChildInFamily(age = 3, inEducation = false, isDisabled = false)
+    ), 68000)
+
+    val family12E = (List(
+      ChildInFamily(age = 15, inEducation = true, isDisabled = false),
+      ChildInFamily(age = 17, inEducation = true, isDisabled = true)
+    ), 97000)
+
+    // Start all 6 calculations at once/call calculateBenefitWithAsync 5 times
+    val calcFamily2A = calculateBenefitWithAsync(family12A._1, family12A._2)  // 1= children list, 2= income
+    val calcFamily2B = calculateBenefitWithAsync(family12B._1, family12B._2)
+    val calcFamily2C = calculateBenefitWithAsync(family12C._1, family12C._2)
+    val calcFamily2D = calculateBenefitWithAsync(family12D._1, family12D._2)
+    val calcFamily2E = calculateBenefitWithAsync(family12E._1, family12E._2)
+
+    // Combine all 5 calls into a list with Future.sequence
+    val allFamily12Results = Future.sequence(List(calcFamily2A, calcFamily2B, calcFamily2C, calcFamily2D, calcFamily2E))
+
+    allFamily12Results.onComplete {
+      case Success(results) =>
+        println("Family 12 - All 5 calculations are complete on 3 threads: first 3 ran and then the next 2 ran")
+        results.foreach(println)
+      case Failure(exception) =>
+        println(s"Family 12 failed: ${exception.getMessage}")
+    }
+    Await.ready(allFamily12Results, 10.seconds)
+
+
+    /**Family 13 - Some Futures don't require an execution context!
+     With future.successful no Execution Context needed.
+     The work is already done for you right now on the main thread before you start the Future. No background threads.
+     Just wrap an existing value*/
+
+    val family13 = List(
+      ChildInFamily(age = 14, inEducation = true, isDisabled = false),
+      ChildInFamily(age = 16, inEducation = true, isDisabled = false)
+    )
+    val familyIncome13 = 39000
+
+    // Do calculation right now (synchronously) on current thread. Happens immediately, no background threads. no helper/worked needed.
+    val weeklyAmount = finalTotalValue(family13, familyIncome13)
+    val yearlyAmount = weeklyAmount * 52
+    val eligibleCount = family13.count(isChildEligible)
+
+    // Wrap the result which already exists in an already-completed Future.
+    val family13ImmediateResult: Future[String] = Future.successful(
+      s"Family 13 Eligible children: $eligibleCount, Family 13 Weekly benefit: £$weeklyAmount, Family 13 Annual benefit: £$yearlyAmount"
+    )
+    // This Future is ALREADY complete when created - no waiting needed!
+
+    family13ImmediateResult.onComplete {
+      case Success(result) => println(s"Family 13 with no Execution Context needed: $result")
+      case Failure(exception) => println(s"Family 13 failed: ${exception.getMessage}")
+    }
 
 
     Thread.sleep(2000) //Let's all async prints finish
@@ -428,16 +549,13 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 //Add .recoverWith: If calculation fails, retry with default values?
 //Remove all Awaits: Use only callbacks (hard?)
 //Add timeout handling: What if a calculation takes too long?
-//Create a custom ExecutionContext: Use fixed thread pool of 2/3 threads???
-//Futures that don't require an execution context?
-//validate a future with a filter and collect?
-//zip two succ futures to a future tuple?
+
 //foldLeft
-//flatter, zipWith, transform with
-//how to test a future
-//multiple chaining and combining - already included??
+//2) flatten, zipWith, transform with
+//how to test a future???
 
-
+//harder??
+//validate a future with a filter and collect?
 
 
 
