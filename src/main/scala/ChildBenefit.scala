@@ -59,6 +59,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
   /** A Future represents a value that will be available at some point in the future & allows my program to continue running while waiting for potentially slow operations to complete. One advantage of Scala's futures is that they help you avoid blocking, you can keep the finite number of threads you decide to work with busy*/
 
+
   /** Add "Future" with OnComplete & Success/Failure(asynchronous)
    Future is for async operations (things that take time) allowing non-blocking execution but may require more careful error handling if an exception occurs
    No pre-checking of conditions here: so if invalid data were passed, can lead to runtime exceptions during calculation**/
@@ -97,7 +98,8 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
 
   def main(args: Array[String]): Unit = {
-    /** Family 1 & 2: Using OnComplete & Success/Failure */
+    /** Family 1 & 2: Using OnComplete & Success/Failure
+     I want to do work in the background and handle the result when it's ready**/
     //Family 1: have two young children
     val youngFamily = List(
       ChildInFamily(age = 3, inEducation = false, isDisabled = false), //from the case class called ChildInFamily
@@ -138,7 +140,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
 
     /** Await.ready vs Await.result
-     Await.result blocks. Do you definitely need the result immediately? (blocking/synchronous).
+     Await.result blocks. Do you definitely need the result immediately? (therefore blocking/synchronous).
      It waits for completion, it extracts the actual value and returns the value directly (not the Future)**/
     //Family 2a: An example with Await.ready with 2 threads running
     println("Family 2a: Using Await.result to get answer immediately")
@@ -171,7 +173,8 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     }
 
 
-    /** Family 3: Using Try for synchronous validation, Try is good for synchronous error handling */
+    /** Family 3: Using Try for synchronous validation, Try is good for synchronous error handling
+     Want result immediately (not async) **/
     println("Family 3: Using Try")
     val tryFamily = List(
       ChildInFamily(age = 12, inEducation = true, isDisabled = true),
@@ -193,7 +196,6 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
      .map transforms the value inside a Future once it completes and returns a new Future with the transformed value **/
 
     //Using.map
-
     println("Family 4: Using .map")
     val mapFamily = List(
       ChildInFamily(age = 8, inEducation = true, isDisabled = false),
@@ -219,7 +221,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
     /** Family 5: Using .recover - only handles failure! transforms failed Future into successful Future with a fallback value. So onComplete will almost always get a Success
      (If calculation succeeds → original result is returned, if calculation throws exception → recovery message is returned instead**/
-    println("Family 5: Using .recover")
+    println("Family 5: Using .recover to handle failures")
     val Family5UsingRecover = List(
       ChildInFamily(age = 15, inEducation = true, isDisabled = false),
       ChildInFamily(age = 17, inEducation = true, isDisabled = false)
@@ -295,7 +297,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
     }
 
 
-    /** Family 8 - Processes 4 families simultaneously using Future.sequence so all calculations run in parallel (instead of one after another - efficient!)**/
+    /** Family 8 - Processes 4 families simultaneously using Future.sequence so all calculations which are independent of each other run in parallel (instead of one after another - efficient!)**/
     println("Family 8: Using Future.sequence for parallel processing")
 
     val families8ForParallelProcessing = List(
@@ -329,7 +331,8 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
 
     /** Family 9 - for-comprehension with Futures (Syntactic sugar for .flatMap and .map so chained Futures are more readable)
-     sequential async operations**/
+     sequential async operations/chaining
+     multiple Futures that depend on each other **/
     println("Family 10: Using for-comprehension")
 
     val family9a = List(
@@ -399,14 +402,14 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
       case Failure(exception) => println(s"Family 10 failed: ${exception.getMessage}")
     }
 
-    try { //wait here until Future finishes (max 5 seconds) which  blocks main program so it doesn't exit before family 10 finishes
+    try { //wait here until Future finishes (max 5 seconds) which blocks main program so it doesn't exit before family 10 finishes
       Await.ready(getFamily10PromiseFromFuture, 5.seconds)
     } catch {
       case e: Exception => println(s"Family 10 had an issue but system continues...")
     }
 
 
-    /** Family 11 - Uses .zip to combine two Futures into a single tuple. Runs in parallel, zip waits for both Futures to complete, then combines their results into a tuple useful when you need results from two independent async operations, you need to compare or combine the two results and both can run at the same time **/
+    /** Family 11 - Uses .zip to combine two independent Futures into a single tuple. Runs in parallel, zip waits for both Futures to complete, then combines their results into a tuple useful when you need results from two independent async operations, you need to compare or combine the two results and both can run at the same time **/
     println("Family 11: Using .zip to combine two calculations")
 
     val family11a = List(
@@ -453,7 +456,9 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
     /** Family 12 - Customised thread pools - Create a custom ExecutionContext: Use fixed thread pool of 3 threads when 5 families arrive at once.
      E.g only 3 checkout till lanes at a supermarket open, if 5 customers arrive at once, 2 will have to wait. My computer decides how many helpers to create (usually 1 helper per CPU core), If 8 CPU cores = 8 helpers available
-      Lots of helpers = lots of work happens at once*/
+      Lots of helpers = lots of work happens at once
+
+     Good to understand that only a limited number of Futures truly run in parallel.*/
 
     println("Family 12: 5 families, but only 3 threads - so some families must wait like in a supermarket when there are not enough checkouts open")
 
@@ -502,7 +507,7 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
 
 
     /**Family 13 - Some Futures don't require an execution context!
-     With future.successful no Execution Context needed.
+     With future.successful no Execution Context needed. YOu already have the answer but need to return a Future.
      The work is already done for you right now on the main thread before you start the Future. No background threads.
      Just wrap an existing value*/
 
@@ -533,6 +538,39 @@ object ChildBenefit { //have removed extends app and replaced with line 92 def m
   }
 }
 
+/** S U M M A R Y
+ -------------------
+
+ Future = A task happening somewhere else
+ Futures let you write responsive programs that don't freeze while waiting. Instead of standing in one queue, you can send "helpers" to multiple queues at once and collect results when ready = foundation of modern async programming in Scala!
+
+ You get a "ticket" immediately - the work happens in the background - eventually the ticket "completes" with a result - can chain operations on the ticket before it completes
+
+Best not to:
+ -------------
+ block async code (use .map/.flatMap),
+mix sync and sync,
+have nested Futures (use .flatMap)
+Not handle the Future (use .recover or error handling).
+
+-----------------------------------
+** M Y   F  A  M  I  L  I  E  S **
+-----------------------------------
+CODE         / WHEN TO USE          / FAMILY:
+
+ onComplete / Handle async result  / Family 1, 2
+ Await.result / Need value now (blocks) / Family 2a
+ Try / Sync error handling / Family 3
+ .map / Transform result / Family 4
+ .recover / Fallback on failure / Family 5
+ .fold / Handle both cases instantly / Family 6 (there is no actual .fold use .map)
+ .flatMap / Chain dependent Futures / Family 7
+ Future.sequence / Many Futures → One result / Family 8
+ for-comprehension / Sequential chaining (clean) / Family 9
+ Promise / Manual completion / Family 10
+ .zip / Combine 2 Futures / Family 11
+ Customised thread pools / Control concurrency / Family 12
+ Future.successful for when no execution Context / Already have a result as no execution Context/ Family 13 **/
 
 
 
